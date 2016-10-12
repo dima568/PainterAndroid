@@ -19,5 +19,11 @@ public class Point {
         paint.setColor(color);
         canvas.drawCircle(x, y, width/2, paint);
     }
+
+    @Override
+    public String toString()
+    {
+        return "x = "+x+", y = "+y+", color: "+color+", width: "+width+";";
+    }
 }
 

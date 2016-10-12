@@ -6,9 +6,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
@@ -18,7 +16,8 @@ import java.util.Random;
 
 public class MainActivity extends Activity {
     private DrawView drawView;
-
+    private Point[] touchPoints = new Point[10];
+    private Point[] prevTouchPoints = new Point[10];
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,35 +61,78 @@ public class MainActivity extends Activity {
         }
 
         @Override
-        public void onDraw(Canvas canvas) {
-            for (Point point : points) {
-                point.draw(canvas, paint);
-            }
+        public void onDraw(Canvas canvas)
+        {
+                for (Point point : points) {
+                    if(point!=null){
+                        point.draw(canvas, paint);
+                    }
+                }
+
         }
 
         public boolean onTouch(View view, MotionEvent event) {
-            Point point;
 
-            float x = event.getX();
-            float y = event.getY();
+//            touchPoints = new Point[10];
+//            prevTouchPoints = new Point[10];
+            int actionMask = event.getActionMasked();
 
-            switch (event.getAction()){
+            int touchNum;
+            switch (actionMask){
 
                 case MotionEvent.ACTION_DOWN:
-                    //sDown = "Down: " + x + "," + y;
-                    //sMove = "";
-                    point = new Point(x, y, color, width);
+                     touchNum = event.getActionIndex();
+                    touchPoints[touchNum] = new Point(event.getX(touchNum), event.getY(touchNum), color, width);
+                    prevTouchPoints[touchNum] = touchPoints[touchNum];
+                    Log.v("MYTAG", "ACTION_DOWN works! Point "+ touchNum+" added!");
+                    break;
+                case MotionEvent.ACTION_POINTER_DOWN:
+                    touchNum = event.getActionIndex();
+                    touchPoints[touchNum] = new Point(event.getX(touchNum), event.getY(touchNum), color, width);
+                    prevTouchPoints[touchNum] = touchPoints[touchNum];
+                    Log.v("MYTAG", "ACTION_POINTER_DOWN works! Point "+ touchNum+" added!");
+                    Log.v("MYTAG", touchPoints[touchNum].toString());
                     break;
                 case MotionEvent.ACTION_MOVE:
-                    //sMove = "Move: " + x + "," + y;
-                    point = new PreviosPoint(x, y, color, points.get(points.size() - 1), width);
+//                    Log.v("MYTAG", "ACTION_MOVE works!");
+                    for (int i = 0; i < 10; i++) {
+//                        Log.v("MYTAG", "point "+i+" checked");
+//                        Log.v("MYTAG", touchPoints[i].toString());
+                        try {
+                            float x = event.getX(i);
+                            if (touchPoints[i] != null && event.getPointerCount() >= 1) {
+                                touchPoints[i] = new PreviosPoint(event.getX(i), event.getY(i), color, prevTouchPoints[i], width);
+                                prevTouchPoints[i] = new Point(event.getX(i), event.getY(i), color, width);
+//                            touchPoints[i] = new Point(event.getX(i), event.getY(i), color, width);
+                                Log.v("MYTAG", "point "+i+" rewrited (x = "+event.getX(i)+"; y = "+ event.getY(i)+")");
+                            }
+                            else{}
+                        }
+                        catch (Exception ex){
+
+                        }
+
+                    }
                     break;
+                case MotionEvent.ACTION_UP:{
+                    touchPoints = new Point[10];
+                    prevTouchPoints = new Point[10];
+                }
+                case MotionEvent.ACTION_POINTER_UP:{
+                    int i = event.getActionIndex();
+                        touchPoints[event.getActionIndex()] = null;
+                        prevTouchPoints[event.getActionIndex()] = null;
+
+                }
                 default:
                     return false;
             }
-            points.add(point);
+            for(int i = 0; i < touchPoints.length; i++)
+            {
+                points.add(touchPoints[i]);
+            }
+//            points.add(point);
             invalidate();
-            //setText(sDown + "\n" + sMove + "\n" + sUp);
             return true;
         }
     }
